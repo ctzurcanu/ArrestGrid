@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ArrestGrid</title>
+    <meta charset="utf-8">
+    <link href="vendor/kendo/examples-offline.css" rel="stylesheet">
+    <link href="vendor/qtip2/jquery.qtip.min.css" rel="stylesheet">
+    
+    <link href="vendor/kendo/kendo.rtl.min.css" rel="stylesheet">
+
+    
+    
+
+    <link rel="stylesheet" href="vendor/kendo/kendo.common-bootstrap.min.css">
+    <link rel="stylesheet" href="vendor/kendo/kendo.bootstrap.min.css">
+
+    <script src="vendor/jquery-2.0.3.min.js"></script> 
+    <script type='text/javascript' src="vendor/jquery.rest.min.js"></script>
+    <script src="vendor/kendo/kendo.web.min.js"></script>
+    <script src="vendor/qtip2/jquery.qtip.min.js"></script>
+    <script>
+        
+    </script>
+
+<style type="text/css">
+
+td {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+
+</style>
+    
+    
+</head>
+<body>
+
+            
+        <div id="example" class="k-content">
+            <center>
+            <div class="input-append search">
+                <input type="text" size="55" id="url" class="input-max span7" onchange="refresh()" placeholder="DB URL" value="http://dataverse.ro/db2/index.php/table1/"> <a href="#" onclick="refresh()" class="k-pager-refresh k-link" title="Refresh"><span class="k-icon k-i-refresh">Refresh</span></a>
+                 
+            </div>
+        </center>
+
+
+
+
+
+            <div id="grid"></div>
+
+<script id="template_csv" type="text/x-kendo-template">
+<a class="k-button" href="\#" onclick="return toolbar_click()">get CSV</a>
+</script>
+
+            
+<script id="template_edit" type="text/x-kendo-template">
+<a class="k-button k-edit" href="\#" onclick="return edit_rec()"><span class="k-icon k-edit"></span></a>
+</script>
+
+<script id="template_delete" type="text/x-kendo-template">
+<a class="k-button k-delete" href="\#" onclick="return del_rec()"><span class="k-icon k-delete"></span></a>
+</script>
+
+            <script>
+
+            
+
+            function toolbar_click() {
+              console.log("Toolbar command is clicked!");
+              return false;
+            }
+
+            function edit_rec(){
+                grid = $("#grid").data("kendoGrid");
+                grid.editRow(grid.select());
+            }
+
+            function del_rec(){
+                grid = $("#grid").data("kendoGrid");
+                grid.removeRow(grid.select());
+            }
+
+            function refresh(){
+                grid = $("#grid").data("kendoGrid");
+                prep_ds()
+                dataSource.read()
+                grid.refresh()
+
+            }
+
+            //   http://localhost:5984/example/   http://localhost/subject.ro/db/tree_cache2/  " 
+            var dataSource;
+            var grid;
+            function prep_ds(){
+                dataSource = new kendo.data.DataSource({
+                            type: "jsonp",
+                            columns: [{
+                                command: [
+                                    { className: "btn-edit", name: "edit", text: "" }, 
+                                    { className: "btn-destroy", name: "destroy", text: "" }
+                                ]
+                            }],
+                            transport: {
+                                read:  {
+                                    url: $("#url").val(),
+                                    type: "GET",
+                                    dataType: "jsonp",
+                                    
+
+                                },
+                                parameterMap: function(options,type) {
+                                        console.log(type)
+                                        switch(type){
+                                            case "read":
+                                                
+                                                $.extend(options,{
+                                                    //q: "javascript",
+                                                    offset: (options.page-1)*options.pageSize,
+                                                    limit: options.pageSize
+                                                })   /*      */
+                                                return options;
+                                            case "destroy":
+                                                return options;
+                                            default:
+                                                return options ;
+
+                                        }
+                                        
+                                    },
+
+                                create: {
+                                    url: function (db) {
+                                    return $("#url").val();
+                                    },
+                                    type: "POST",
+                                    contentType: "application/x-www-form-urlencoded",
+                                    dataType: "jsonp"
+                                },
+                                update: {
+                                    url: function (db) {
+                                    console.log(db);
+                                    return $("#url").val() + db.id;;
+                                    },
+                                    type: "PUT",
+                                    contentType: "application/x-www-form-urlencoded",
+                                    success: function (result) {
+                                    console.log(result);
+                                    },
+                                    //dataType: "jsonp"
+                                },
+                                destroy: {
+                                    url: function (db) {
+                                    return $("#url").val()  + db.id;
+                                    },
+                                    type: "DELETE",
+                                    //dataType: "json"
+                                },
+                            },
+                           
+                            schema: {
+                                data: function(data) {
+                                    
+                                    return data
+                                },
+                                model: { id: "id" }
+                            },
+                              
+                            pageSize: 5,
+                            serverPaging: true,
+                            serverFiltering: true,
+                            serverSorting: true
+                        });
+            }
+                $(document).ready(function() {
+                    //sessionStorage.setItem("kendoSkin", "bootstrap");
+
+                    prep_ds();
+
+                    grid = $("#grid").kendoGrid({
+                        //autoBind: false,
+                        //,
+                         /*
+                        columns: [  {
+                                command: [
+                                    { className: "btn-edit", name: "edit", text: "" }, 
+                                    { className: "btn-destroy", name: "destroy", text: "" }
+                                ]
+                            }
+                        ],
+                         */
+                        dataSource: dataSource,
+                        /*   */
+                        height: 550,
+                        mobile: true,
+
+                        sortable: true,
+                        filterable: true,
+                        columnMenu: true,
+                        pageable: {
+                            pageSize: 5,
+                            pageSizes: [5, 10, 50, 100, 500, 1000],
+                            input: true,
+                            //pageSizes: true,
+                            refresh: true,
+                            messages: {
+                              itemsPerPage: "data items per page"
+                            }
+                        },
+                     /* */
+                        resizable: true,
+                        scrollable:true,
+                        selectable: true,
+                        toolbar: [
+                            { name: "create" , text: ""},
+                            { name: "save", text: "" }, 
+                            { template: kendo.template($("#template_edit").html())  }, 
+                            { template: kendo.template($("#template_delete").html())  },
+                            {  template: kendo.template($("#template_csv").html()) }
+
+                        ] ,
+                        editable: {
+                            mode:  "inline",    // "popup",   "inline", 
+                            confirmation: false
+                        },
+                      dataBinding2: function(e) {
+                        console.log("dataBinding");
+                        //console.log(this)
+
+                        /*
+                        this.columns.push( {
+                            command: [
+                                { className: "btn-edit", name: "edit", text: "" }, 
+                                { className: "btn-destroy", name: "destroy", text: "" }
+                            ]
+                        });
+                        */
+                        
+                      },
+                      dataBound: function(e) {
+                        console.log("dataBound");
+                        //var grid = $("#grid").data("kendoGrid");
+                        //grid.resize(true);
+                        $('td').each(function() { // Grab all "<a>" elements, and for each...
+                             $(this).qtip({ // 
+                                content: {
+                                    text: $(this).html() // WILL work, because .each() sets "this" to refer to each element
+                                },
+                                position: {
+                                my: 'top right',  // Position my top left...
+                                //at: 'bottom right', // at the bottom right of...
+                                target: "mouse"   //$('td') // my target
+                            }
+                            });
+                        });
+                        //$("td").bind("mouseover",function(e){})
+
+                   
+
+                        
+                        /*
+                        this.columns.push( {
+                            command: [
+                                { className: "btn-edit", name: "edit", text: "" }, 
+                                { className: "btn-destroy", name: "destroy", text: "" }
+                            ]
+                        });
+                        */
+                        //grid.setDataSource(dataSource);
+                      }
+                    });
+
+                    //alert("fe")
+                    
+                    
+
+
+
+                });
+            </script>
+        </div>
+
+    
+            
+</body>
+</html>
